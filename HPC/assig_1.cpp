@@ -228,3 +228,22 @@ int main() {
 
     return 0;
 }
+
+
+// Enter number of vertices: 6
+// Enter number of edges: 5
+// Enter edges (u v):
+// 0 1
+// 1 2
+// 1 3
+// 2 4
+// 2 5
+
+
+// Enter number of vertices: 7
+// Enter number of edges: 4
+// Enter edges (u v):
+// 0 1
+// 1 2
+// 3 4
+// 5 6
