@@ -1,8 +1,10 @@
+#include <cuda_runtime.h>
 #include <bits/stdc++.h>
 
-using namespace std; 
+using namespace std;
 using namespace std::chrono;
 
+// CUDA kernel
 __global__ void multiply(int* A, int* B, int* C, int M, int N, int K) {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -16,23 +18,25 @@ __global__ void multiply(int* A, int* B, int* C, int M, int N, int K) {
     }
 }
 
-void initialize(int* matrix, int rows, int cols) {
-    for (int i = 0; i < rows * cols; i++) {
-        cout << "Enter element " << i + 1 << ": ";
-        cin >> matrix[i];
+// Initialize matrix with random values
+void initialize(int* matrix, int size) {
+    for (int i = 0; i < size; i++) {
+        matrix[i] = rand() % 10;
     }
 }
 
+// Print matrix (only for small sizes)
 void print(int* matrix, int rows, int cols) {
-    for (int row = 0; row < rows; row++) {
-        for (int col = 0; col < cols; col++) {
-            cout << matrix[row * cols + col] << " ";
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            cout << matrix[i * cols + j] << " ";
         }
-        cout << '\n';
+        cout << "\n";
     }
-    cout << '\n';
+    cout << "\n";
 }
 
+// Sequential multiplication
 void sequentialMultiply(int* A, int* B, int* C, int M, int N, int K) {
     for (int i = 0; i < M; i++) {
         for (int j = 0; j < K; j++) {
@@ -46,31 +50,18 @@ void sequentialMultiply(int* A, int* B, int* C, int M, int N, int K) {
 }
 
 int main() {
-    int M, N, K;
-    cout << "Enter the number of rows and columns of the first matrix: ";
-    cin >> M >> N;
-    cout << "Enter the number of columns of the second matrix: ";
-    cin >> K;
+    // Matrix dimensions
+    int M = 512, N = 512, K = 512;
 
-    int* A, * B, * C;
+    int* A = new int[M * N];
+    int* B = new int[N * K];
+    int* C = new int[M * K];
 
-    int matrixSize = M * K;
-    size_t matrixBytes = matrixSize * sizeof(int);
+    initialize(A, M * N);
+    initialize(B, N * K);
 
-    A = new int[M * N];
-    B = new int[N * K];
-    C = new int[M * K];
-
-    initialize(A, M, N);
-    initialize(B, N, K);
-
-    cout << "Matrix A: \n";
-    print(A, M, N);
-
-    cout << "Matrix B: \n";
-    print(B, N, K);
-
-    int* X, * Y, * Z;
+    // Device memory
+    int *X, *Y, *Z;
     cudaMalloc(&X, M * N * sizeof(int));
     cudaMalloc(&Y, N * K * sizeof(int));
     cudaMalloc(&Z, M * K * sizeof(int));
@@ -79,33 +70,51 @@ int main() {
     cudaMemcpy(Y, B, N * K * sizeof(int), cudaMemcpyHostToDevice);
 
     int THREADS = 16;
-    int BLOCKS = (M + THREADS - 1) / THREADS;
 
     dim3 threads(THREADS, THREADS);
-    dim3 blocks(BLOCKS, BLOCKS);
 
-    // Sequential multiplication
+    // Correct grid dimensions
+    dim3 blocks(
+        (K + THREADS - 1) / THREADS,
+        (M + THREADS - 1) / THREADS
+    );
+
+    // ---------------- CPU ----------------
     auto start = high_resolution_clock::now();
+
     sequentialMultiply(A, B, C, M, N, K);
+
     auto stop = high_resolution_clock::now();
-    auto seq_duration = duration_cast<microseconds>(stop - start);
+    auto cpu_time = duration_cast<microseconds>(stop - start);
 
-    cout << "Sequential Multiplication of matrix A and B: \n";
-    print(C, M, K);
-
-    // Parallel multiplication
+    // ---------------- GPU ----------------
     start = high_resolution_clock::now();
+
     multiply<<<blocks, threads>>>(X, Y, Z, M, N, K);
-    cudaMemcpy(C, Z, M * K * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();  //  important
+
     stop = high_resolution_clock::now();
-    auto par_duration = duration_cast<microseconds>(stop - start);
+    auto gpu_time = duration_cast<microseconds>(stop - start);
 
-    cout << "Parallel Multiplication of matrix A and B: \n";
-    print(C, M, K);
+    // Copy result back
+    cudaMemcpy(C, Z, M * K * sizeof(int), cudaMemcpyDeviceToHost);
 
-    cout << "Sequential Multiplication Time: " << seq_duration.count() << " microseconds" << endl;
-    cout << "Parallel Multiplication Time: " << par_duration.count() << " microseconds" << endl;
+    // CUDA error check
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        cout << "CUDA Error: " << cudaGetErrorString(err) << endl;
+    }
 
+    // Print (only if small)
+    if (M <= 10) {
+        cout << "Result Matrix:\n";
+        print(C, M, K);
+    }
+
+    cout << "CPU Time: " << cpu_time.count() << " ms\n";
+    cout << "GPU Time: " << gpu_time.count() << " ms\n";
+
+    // Cleanup
     delete[] A;
     delete[] B;
     delete[] C;

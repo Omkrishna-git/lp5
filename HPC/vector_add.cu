@@ -1,8 +1,10 @@
+#include <cuda_runtime.h>
 #include <bits/stdc++.h>
 
-using namespace std; 
+using namespace std;
 using namespace std::chrono;
 
+// CUDA kernel
 __global__ void add(int* A, int* B, int* C, int size) {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -11,20 +13,23 @@ __global__ void add(int* A, int* B, int* C, int size) {
     }
 }
 
-void initialize(int* vector, int size) {
+// Initialize with random values
+void initialize(int* arr, int size) {
     for (int i = 0; i < size; i++) {
-        cout << "Enter element " << i + 1 << " of the vector: ";
-        cin >> vector[i];
+        arr[i] = rand() % 100;
     }
 }
 
-void print(int* vector, int size) {
-    for (int i = 0; i < size; i++) {
-        cout << vector[i] << " ";
+// Print first few elements (for verification)
+void printSample(int* arr, int size, string name) {
+    cout << name << " (first 10 elements): ";
+    for (int i = 0; i < min(size, 10); i++) {
+        cout << arr[i] << " ";
     }
-    cout << endl;
+    cout << "\n";
 }
 
+// Sequential addition
 void sequentialAddition(int* A, int* B, int* C, int size) {
     for (int i = 0; i < size; i++) {
         C[i] = A[i] + B[i];
@@ -32,60 +37,65 @@ void sequentialAddition(int* A, int* B, int* C, int size) {
 }
 
 int main() {
-    int N;
-    cout << "Enter the size of the vectors: ";
-    cin >> N;
+    // Large input
+    int N = 1000000;  // 1 million elements
 
-    int* A, * B, * C;
+    int* A = new int[N];
+    int* B = new int[N];
+    int* C = new int[N];
 
-    int vectorSize = N;
-    size_t vectorBytes = vectorSize * sizeof(int);
+    initialize(A, N);
+    initialize(B, N);
 
-    A = new int[vectorSize];
-    B = new int[vectorSize];
-    C = new int[vectorSize];
+    printSample(A, N, "Vector A");
+    printSample(B, N, "Vector B");
 
-    initialize(A, vectorSize);
-    initialize(B, vectorSize);
+    // Device memory
+    int *X, *Y, *Z;
+    cudaMalloc(&X, N * sizeof(int));
+    cudaMalloc(&Y, N * sizeof(int));
+    cudaMalloc(&Z, N * sizeof(int));
 
-    cout << "Vector A: ";
-    print(A, N);
-    cout << "Vector B: ";
-    print(B, N);
-
-    int* X, * Y, * Z;
-    cudaMalloc(&X, vectorBytes);
-    cudaMalloc(&Y, vectorBytes);
-    cudaMalloc(&Z, vectorBytes);
-
-    cudaMemcpy(X, A, vectorBytes, cudaMemcpyHostToDevice);
-    cudaMemcpy(Y, B, vectorBytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(X, A, N * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(Y, B, N * sizeof(int), cudaMemcpyHostToDevice);
 
     int threadsPerBlock = 256;
     int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;
 
-    // Sequential addition
+    // ---------------- CPU ----------------
     auto start = high_resolution_clock::now();
+
     sequentialAddition(A, B, C, N);
+
     auto stop = high_resolution_clock::now();
-    auto seq_duration = duration_cast<microseconds>(stop - start);
+    auto cpu_time = duration_cast<microseconds>(stop - start);
 
-    cout << "Sequential Addition: ";
-    print(C, N);
+    printSample(C, N, "C (CPU)");
 
-    // Parallel addition
+    // ---------------- GPU ----------------
     start = high_resolution_clock::now();
+
     add<<<blocksPerGrid, threadsPerBlock>>>(X, Y, Z, N);
-    cudaMemcpy(C, Z, vectorBytes, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();  // important
+
     stop = high_resolution_clock::now();
-    auto par_duration = duration_cast<microseconds>(stop - start);
+    auto gpu_time = duration_cast<microseconds>(stop - start);
 
-    cout << "Parallel Addition: ";
-    print(C, N);
+    // Copy result back
+    cudaMemcpy(C, Z, N * sizeof(int), cudaMemcpyDeviceToHost);
 
-    cout << "Sequential Addition Time: " << seq_duration.count() << " microseconds" << endl;
-    cout << "Parallel Addition Time: " << par_duration.count() << " microseconds" << endl;
+    // Error check
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        cout << "CUDA Error: " << cudaGetErrorString(err) << endl;
+    }
 
+    printSample(C, N, "C (GPU)");
+
+    cout << "CPU Time: " << cpu_time.count() << " ms\n";
+    cout << "GPU Time: " << gpu_time.count() << " ms\n";
+
+    // Cleanup
     delete[] A;
     delete[] B;
     delete[] C;
