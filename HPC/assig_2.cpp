@@ -177,36 +177,126 @@ int main() {
         vector<int> temp = arr;
 
         switch (choice) {
-            case 1:
+
+            case 1: {
+                auto start_time = chrono::high_resolution_clock::now();
+
                 mergeSort(temp, 0, n - 1);
-                printArray(temp);
-                break;
 
-            case 2:
+                auto end_time = chrono::high_resolution_clock::now();
+
+                cout << "\nSorted Array:\n";
+                printArray(temp);
+
+                cout << "\nTime taken: "
+                    << chrono::duration_cast<chrono::microseconds>
+                        (end_time - start_time).count()
+                    << " microseconds\n";
+
+                break;
+            }
+
+            case 2: {
+                auto start_time = chrono::high_resolution_clock::now();
+
                 parallelMergeSort(temp, 0, n - 1);
-                printArray(temp);
-                break;
 
-            case 3:
+                auto end_time = chrono::high_resolution_clock::now();
+
+                cout << "\nSorted Array:\n";
+                printArray(temp);
+
+                cout << "\nTime taken: "
+                    << chrono::duration_cast<chrono::microseconds>
+                        (end_time - start_time).count()
+                    << " microseconds\n";
+
+                break;
+            }
+
+            case 3: {
+                auto start_time = chrono::high_resolution_clock::now();
+
                 bubble(temp, n);
-                printArray(temp);
-                break;
 
-            case 4:
+                auto end_time = chrono::high_resolution_clock::now();
+
+                cout << "\nSorted Array:\n";
+                printArray(temp);
+
+                cout << "\nTime taken: "
+                    << chrono::duration_cast<chrono::microseconds>
+                        (end_time - start_time).count()
+                    << " microseconds\n";
+
+                break;
+            }
+
+            case 4: {
+                auto start_time = chrono::high_resolution_clock::now();
+
                 parallelBubble(temp, n);
-                printArray(temp);
-                break;
 
-            case 5:
+                auto end_time = chrono::high_resolution_clock::now();
+
+                cout << "\nSorted Array:\n";
+                printArray(temp);
+
+                cout << "\nTime taken: "
+                    << chrono::duration_cast<chrono::microseconds>
+                        (end_time - start_time).count()
+                    << " microseconds\n";
+
+                break;
+            }
+
+            case 5: {
                 compareMerge(arr);
                 break;
+            }
 
-            case 6:
+            case 6: {
                 compareBubble(arr);
                 break;
+            }
+
+            case 7: {
+                cout << "Exiting Program...\n";
+                break;
+            }
+
+            default:
+                cout << "Invalid Choice\n";
         }
 
     } while (choice != 7);
 
     return 0;
 }
+
+// 13 2 19 7 4 16 1 11 20 5 9 18 3 14 6 17 8 12 10 15
+
+/*
+
+27 4 49 12 35 1 44 18 7 50
+23 9 31 15 42 6 28 11 39 2
+47 20 14 33 8 25 41 5 30 17
+46 10 22 37 3 48 16 29 13 40
+19 34 24 45 21 32 26 38 43 36
+
+*/
+
+/*
+
+57 12 89 3 76 45 21 98 34 67
+5 90 43 16 72 28 99 54 11 63
+37 80 2 95 26 48 70 14 85 31
+60 9 52 100 18 74 41 7 93 24
+66 35 1 87 50 13 79 29 58 4
+97 22 64 39 10 82 27 55 91 6
+73 44 17 96 32 68 8 53 84 25
+61 15 77 40 94 19 56 30 88 47
+23 71 36 92 49 20 65 42 78 33
+59 86 69 51 81 38 62 83 75 46
+
+*/
