@@ -325,3 +325,345 @@ int main() {
 
 
 -------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+# CUDA Vector Addition & Matrix Multiplication Viva Theory
+
+## 1. What is CUDA?
+
+CUDA (Compute Unified Device Architecture) is a parallel computing platform developed by NVIDIA that allows programs to run on GPU for high-speed computation.
+
+---
+
+## 2. Why is GPU faster than CPU?
+
+* CPU has few powerful cores.
+* GPU has thousands of small cores.
+* GPU executes many operations simultaneously.
+* Best for parallel tasks like vector addition, matrix multiplication, image processing, AI, etc.
+
+---
+
+## 3. What is a CUDA Kernel?
+
+A kernel is a function executed on the GPU.
+
+Example:
+
+```cpp
+__global__ void add(...)
+```
+
+* `__global__` means function runs on GPU.
+* Kernel is launched from CPU.
+
+---
+
+## 4. What is a Thread in CUDA?
+
+* Smallest execution unit in GPU.
+* Each thread performs one task.
+* In vector addition:
+
+  * One thread adds one element.
+
+Example:
+
+```cpp
+C[i] = A[i] + B[i]
+```
+
+---
+
+## 5. What is a Block?
+
+* Group of threads.
+* Threads inside block can cooperate.
+* Shared resources available inside a block.
+
+Example:
+
+```cpp
+256 threads per block
+```
+
+---
+
+## 6. What is a Grid?
+
+* Collection of blocks.
+* Entire kernel execution forms a grid.
+
+Hierarchy:
+
+```text
+Grid → Blocks → Threads
+```
+
+---
+
+## 7. Explain Thread Index Calculation
+
+```cpp
+int tid = blockIdx.x * blockDim.x + threadIdx.x;
+```
+
+Where:
+
+* `blockIdx.x` → block number
+* `blockDim.x` → threads per block
+* `threadIdx.x` → thread position inside block
+
+Used to give unique ID to every thread.
+
+---
+
+## 8. Why do we use Boundary Check?
+
+```cpp
+if (tid < size)
+```
+
+Prevents threads from accessing invalid memory locations.
+
+---
+
+## 9. What is `cudaMalloc()`?
+
+Allocates memory on GPU.
+
+Example:
+
+```cpp
+cudaMalloc(&X, size);
+```
+
+Similar to `malloc()` in C.
+
+---
+
+## 10. What is `cudaMemcpy()`?
+
+Copies data between CPU and GPU.
+
+Types:
+
+* Host to Device
+* Device to Host
+* Device to Device
+
+Example:
+
+```cpp
+cudaMemcpy(X, A, size, cudaMemcpyHostToDevice);
+```
+
+---
+
+## 11. What is `cudaDeviceSynchronize()`?
+
+Stops CPU execution until GPU finishes all tasks.
+
+Important for correct timing measurement.
+
+---
+
+## 12. Why do we use `cudaFree()`?
+
+Releases GPU memory after execution.
+
+Example:
+
+```cpp
+cudaFree(X);
+```
+
+---
+
+## 13. What is Parallelism in CUDA?
+
+Executing many operations at the same time using multiple GPU threads.
+
+---
+
+## 14. Explain Sequential vs Parallel Execution
+
+| Sequential            | Parallel              |
+| --------------------- | --------------------- |
+| One task at a time    | Many tasks together   |
+| CPU-based             | GPU-based             |
+| Slower for large data | Faster for large data |
+
+---
+
+## 15. Why is GPU sometimes slower?
+
+GPU may become slower when:
+
+* Input size is small
+* Memory transfer time is high
+* GPU launch overhead exists
+
+For small tasks CPU performs better.
+
+---
+
+## 16. Why does GPU become faster for large data?
+
+Because:
+
+* Thousands of threads execute simultaneously
+* Workload is distributed across GPU cores
+
+---
+
+## 17. What is Speedup?
+
+Measures performance improvement.
+
+Formula:
+
+If speedup > 1 → GPU faster.
+
+---
+
+## 18. What is Matrix Multiplication?
+
+Rows of first matrix multiply with columns of second matrix.
+
+Result:
+
+* If A is `M × N`
+* B is `N × K`
+* Result C is `M × K`
+
+---
+
+## 19. Matrix Multiplication Formula
+
+---
+
+## 20. How is Matrix Multiplication Parallelized?
+
+* Each GPU thread computes one element of result matrix.
+* Multiple elements computed simultaneously.
+
+---
+
+## 21. What is `dim3` in CUDA?
+
+Used for multidimensional block and grid creation.
+
+Example:
+
+```cpp
+dim3 threads(16,16);
+dim3 blocks(x,y);
+```
+
+---
+
+## 22. Why use 2D Threads in Matrix Multiplication?
+
+Matrix is 2D structure.
+
+* One dimension for rows
+* One dimension for columns
+
+---
+
+## 23. What is Host and Device?
+
+| Term   | Meaning |
+| ------ | ------- |
+| Host   | CPU     |
+| Device | GPU     |
+
+---
+
+## 24. What is SIMD?
+
+Single Instruction Multiple Data.
+
+* Same instruction executed on multiple data simultaneously.
+
+GPU works on SIMD/SIMT principle.
+
+---
+
+## 25. Applications of CUDA
+
+* Artificial Intelligence
+* Deep Learning
+* Image Processing
+* Video Rendering
+* Scientific Simulation
+* Data Analytics
+* Matrix Operations
+
+---
+
+## 26. Advantages of CUDA
+
+* Massive parallelism
+* Faster computation
+* Efficient for large datasets
+* High throughput
+
+---
+
+## 27. Limitations of CUDA
+
+* Requires NVIDIA GPU
+* Complex debugging
+* Memory transfer overhead
+* Not efficient for small problems
+
+---
+
+## 28. Difference Between CPU and GPU
+
+| CPU                         | GPU                         |
+| --------------------------- | --------------------------- |
+| Few cores                   | Thousands of cores          |
+| Optimized for logic         | Optimized for parallelism   |
+| Better for sequential tasks | Better for repetitive tasks |
+
+---
+
+## 29. Why is Vector Addition Easy to Parallelize?
+
+Each element addition is independent.
+
+Example:
+
+```text
+C[i] = A[i] + B[i]
+```
+
+No dependency between elements.
+
+---
+
+## 30. Why is Matrix Multiplication More Complex?
+
+Because:
+
+* Requires nested loops
+* More memory access
+* Higher computation complexity
+
+Time Complexity:
+
+
+
+
+
+
+
+
+
+
